@@ -1,0 +1,5 @@
+# R-specific files
+*.Rhistory
+*.RData
+*.Rproj
+*.Rproj.user

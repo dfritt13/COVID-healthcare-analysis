@@ -1,0 +1,61 @@
+---
+title: "COVID_data_analysis"
+author: "D. Fritts"
+date: "2025-09-01"
+output: html_document
+---
+GOAL: Create your own analysis of the COVID data in the same manner as the NYPD shooting report. This should have the following elements:
+- Questions Asked
+- At least 2 visualizations
+- At least 1 model
+- Conclusion
+- Data and Personal Biases identified and mitigation strategies detailed
+
+## Data Load and Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_libraries, message=FALSE}
+# Loading in necessary libraries
+library(tidyverse)
+```
+
+Here we are loading in 2 data sets. The first one details the global COVID case numbers for each country on each day. The other deatils the global deaths attributed to COVID for each country on each day. 
+
+```{r get_jhu_data}
+# For this analysis I am only going to work with the global data.
+
+url_in <- "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
+
+file_names <- c(
+  "time_series_covid19_confirmed_global.csv",
+  "time_series_covid19_deaths_global.csv")
+
+urls <- str_c(url_in, file_names)
+
+global_cases <- read_csv(urls[1])
+global_deaths <- read_csv(urls[2])
+
+```
+
+## Initial Data Preparation
+The initial data comes in wide form, meaning that there is a column for each date. We will be pivoting this data to long form for ease of use before showing any summaries. 
+We will then join these datasets into one master set. 
+
+```{r prep_data}
+
+# Pivoting out global cases and removing Lat and Long
+global_cases_tidy <- global_cases %>% pivot_longer(cols = -c('Province/State', 'Country/Region', 'Lat', 'Long'), names_to = "date", values_to = "cases") %>% select(-c(Lat, Long))
+
+# Pivoting out global deaths and removing Lat and Long
+global_deaths_tidy <- global_deaths %>% pivot_longer(cols = -c('Province/State', 'Country/Region', 'Lat', 'Long'), names_to = "date", values_to = "deaths") %>% select(-c(Lat, Long))
+
+# Joining global cases and deaths, cleaning up column names and changing date(string) to date (date)
+global <- global_cases_tidy %>% 
+  full_join(global_deaths_tidy) %>% 
+  rename(Country_Region = 'Country/Region',
+         Province_State = 'Province/State') %>%
+  mutate(date = mdy(date))
+```
